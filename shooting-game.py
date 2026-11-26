@@ -31,7 +31,7 @@ FRAME = 0.07
 class Player:
     x: int = WIDTH // 2
     y: int = HEIGHT - 1
-    lives: int = 3
+    lives: int = 5
     symbol: str = '^'
 
     def move(self, direction):
@@ -102,7 +102,12 @@ class ShootingGame:
     def fire(self):
         if self.game_over or self.paused or self.cooldown:
             return False
-        self.bullets.append(Bullet(self.player.x, self.player.y - 1))
+        if self.score >= 400:
+            self.bullets.append(Bullet(self.player.x - 1, self.player.y - 1))
+            self.bullets.append(Bullet(self.player.x, self.player.y - 1))
+            self.bullets.append(Bullet(self.player.x + 1, self.player.y - 1))
+        else:
+            self.bullets.append(Bullet(self.player.x, self.player.y - 1))
         self.cooldown = 3
         return True
 
@@ -125,7 +130,7 @@ class ShootingGame:
             enemy.update()
         # 命中弾は1発につき敵1体に当たる。残HPが0なら撃墜。
         for bullet in list(self.bullets):
-            if bullet.y < 0:
+            if bullet.y < 0 or bullet.x < 0 or bullet.x >= WIDTH:
                 self.bullets.remove(bullet)
                 continue
             for enemy in list(self.enemies):
@@ -149,7 +154,7 @@ class ShootingGame:
             if 0 <= enemy.y < HEIGHT:
                 board[enemy.y][enemy.x] = enemy.symbol
         for bullet in self.bullets:
-            if 0 <= bullet.y < HEIGHT:
+            if 0 <= bullet.y < HEIGHT and 0 <= bullet.x < WIDTH:
                 board[bullet.y][bullet.x] = bullet.symbol
         board[self.player.y][self.player.x] = self.player.symbol
         out = ['=== ASCII SHOOTING ===', f'SCORE {self.score}  LIFE {self.player.lives}  ENEMY {len(self.enemies)}', '+' + '-' * WIDTH + '+']
