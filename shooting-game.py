@@ -116,7 +116,7 @@ class ShootingGame:
         self.tick += 1
         if self.cooldown:
             self.cooldown -= 1
-        interval = max(7, 22 - self.score // 150)
+        interval = max(7, 22 - (self.score // 150) * 3)
         if self.tick % interval == 0:
             self.spawn_enemy()
         for bullet in self.bullets:
