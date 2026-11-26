@@ -95,6 +95,7 @@ class ShootingGame:
         self.enemies = []
         self.score = 0
         self.tick = 0
+        self.special_used = 0
         self.cooldown = 0
         self.paused = False
         self.game_over = False
@@ -110,6 +111,25 @@ class ShootingGame:
             self.bullets.append(Bullet(self.player.x, self.player.y - 1))
         self.cooldown = 3
         return True
+    
+    def special_attack(self):
+        if self.game_over or self.paused:
+            return False
+
+        if self.score // 300 <= self.special_used:
+            return False
+        
+        self.special_used += 1
+
+        for enemy in self.enemies:
+            self.score += enemy.points
+
+        self.enemies.clear()
+
+        for x in range(WIDTH):
+            self.bullets.append(Bullet(x, self.player.y - 1))
+
+        return True
 
     def spawn_enemy(self):
         enemy_type = self.rng.choices([Enemy, FastEnemy, HeavyEnemy], weights=[7, 2, 1])[0]
@@ -121,7 +141,7 @@ class ShootingGame:
         self.tick += 1
         if self.cooldown:
             self.cooldown -= 1
-        interval = max(7, 22 - (self.score // 150) * 3)
+        interval = max(9, 28 - (self.score // 150) * 3)
         if self.tick % interval == 0:
             self.spawn_enemy()
         for bullet in self.bullets:
@@ -157,9 +177,10 @@ class ShootingGame:
             if 0 <= bullet.y < HEIGHT and 0 <= bullet.x < WIDTH:
                 board[bullet.y][bullet.x] = bullet.symbol
         board[self.player.y][self.player.x] = self.player.symbol
-        out = ['=== ASCII SHOOTING ===', f'SCORE {self.score}  LIFE {self.player.lives}  ENEMY {len(self.enemies)}', '+' + '-' * WIDTH + '+']
+        special_count = max(0, self.score // 300 - self.special_used)
+        out = ['=== ASCII SHOOTING ===', f'SCORE {self.score}  LIFE {self.player.lives}  ENEMY {len(self.enemies)}',f'SPECIAL {special_count}  (X)', '+' + '-' * WIDTH + '+']
         out += ['|' + ''.join(row) + '|' for row in board]
-        out += ['+' + '-' * WIDTH + '+', 'A/D:移動 Space:射撃 P:停止 R:再開 Q:終了', 'A:通常 H:重装甲(3発) F:高速']
+        out += ['+' + '-' * WIDTH + '+', 'A/D:移動 Space:射撃 X:スキル(/300score) P:停止 R:再開 Q:終了', 'A:通常 H:重装甲(3発) F:高速',]
         if self.paused:
             out.append('--- PAUSED ---')
         if self.game_over:
@@ -192,6 +213,8 @@ def main():
                     game.player.move(1)
                 elif key == ' ':
                     game.fire()
+                elif key in ('x', 'X'):
+                    game.special_attack()
             now = time.monotonic()
             if now - last >= FRAME:
                 game.update()
